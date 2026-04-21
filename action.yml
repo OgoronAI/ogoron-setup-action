@@ -1,0 +1,116 @@
+name: Ogoron Setup
+description: Initialize or upgrade Ogoron in a repository and open a pull request with the changes.
+author: OgoronAI
+branding:
+  icon: git-pull-request
+  color: blue
+
+inputs:
+  working-directory:
+    description: Repository directory where Ogoron runs.
+    required: false
+    default: .
+  cli-version:
+    description: Ogoron CLI release version to download.
+    required: false
+    default: 5.2.0
+  download-url:
+    description: Explicit Linux bundle URL override.
+    required: false
+  analyze-business:
+    description: Run ogoron analyze business after init or upgrade.
+    required: false
+    default: "true"
+  prepare-ui-workspace:
+    description: Prepare the Ogoron UI workspace after bootstrap. When analyze business succeeds, this is treated as already included by the current CLI.
+    required: false
+    default: "true"
+  create-pr:
+    description: Create or update a pull request when changes are detected.
+    required: false
+    default: "true"
+  pr-branch:
+    description: Branch used for bootstrap changes.
+    required: false
+    default: ogoron/setup
+  pr-title:
+    description: Pull request title.
+    required: false
+    default: Set up Ogoron in this repository
+  commit-message:
+    description: Commit message used for the bootstrap branch.
+    required: false
+    default: Initialize or upgrade Ogoron repository artifacts
+  author-name:
+    description: Git author name for bootstrap commit.
+    required: false
+    default: ogoron-bot
+  author-email:
+    description: Git author email for bootstrap commit.
+    required: false
+    default: agents@ogoron.com
+
+outputs:
+  ogoron-bin:
+    description: Absolute path to the downloaded Ogoron executable.
+    value: ${{ steps.install.outputs.ogoron-bin }}
+  changes-detected:
+    description: Whether Ogoron changed repository files.
+    value: ${{ steps.bootstrap.outputs.changes-detected }}
+  bootstrap-mode:
+    description: Whether the repository was initialized or upgraded.
+    value: ${{ steps.bootstrap.outputs.bootstrap-mode }}
+  analyze-status:
+    description: Status of the analyze business phase.
+    value: ${{ steps.bootstrap.outputs.analyze-status }}
+  ui-workspace-status:
+    description: Status of the UI workspace preparation phase.
+    value: ${{ steps.bootstrap.outputs.ui-workspace-status }}
+  pr-body-path:
+    description: Generated path to the pull request body file.
+    value: ${{ steps.bootstrap.outputs.pr-body-path }}
+  pull-request-url:
+    description: URL of the created or updated pull request, if any.
+    value: ${{ steps.pr.outputs.pull-request-url }}
+  branch-name:
+    description: Branch name used for bootstrap changes.
+    value: ${{ inputs.pr-branch }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      name: Install Ogoron
+      shell: bash
+      run: "${{ github.action_path }}/scripts/install-ogoron.sh"
+      env:
+        INPUT_CLI_VERSION: ${{ inputs.cli-version }}
+        INPUT_DOWNLOAD_URL: ${{ inputs.download-url }}
+
+    - id: bootstrap
+      name: Bootstrap repository
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: "${{ github.action_path }}/scripts/bootstrap-repo.sh"
+      env:
+        OGORON_BIN: ${{ steps.install.outputs.ogoron-bin }}
+        INPUT_ANALYZE_BUSINESS: ${{ inputs.analyze-business }}
+        INPUT_PREPARE_UI_WORKSPACE: ${{ inputs.prepare-ui-workspace }}
+        INPUT_AUTHOR_NAME: ${{ inputs.author-name }}
+        INPUT_AUTHOR_EMAIL: ${{ inputs.author-email }}
+        OGORON_PLAIN: "1"
+        NO_COLOR: "1"
+        CI: "1"
+
+    - id: pr
+      name: Create pull request
+      if: ${{ inputs.create-pr == 'true' && steps.bootstrap.outputs.changes-detected == 'true' }}
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+        branch: ${{ inputs.pr-branch }}
+        title: ${{ inputs.pr-title }}
+        commit-message: ${{ inputs.commit-message }}
+        body-path: ${{ steps.bootstrap.outputs.pr-body-path }}
+        author: ${{ inputs.author-name }} <${{ inputs.author-email }}>
+        committer: ${{ inputs.author-name }} <${{ inputs.author-email }}>
