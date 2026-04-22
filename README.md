@@ -84,3 +84,18 @@ jobs:
 - It does not commit directly to the default branch.
 - When no repository changes are produced, no PR is created.
 - The current minimum supported Ogoron CLI version for this action is `5.2.0`.
+
+## Related actions
+
+- [`Ogoron Generate`](https://github.com/OgoronAI/ogoron-generate-action) to create unit, API, and UI artifacts after bootstrap
+- [`Ogoron Run`](https://github.com/OgoronAI/ogoron-run-action) to execute generated or project tests in CI
+- [`Ogoron Heal`](https://github.com/OgoronAI/ogoron-heal-action) to repair failing generated or project tests
+- [`Ogoron Exec`](https://github.com/OgoronAI/ogoron-exec-action) as a low-level escape hatch for custom workflows
+
+## Recommended flow
+
+1. Run `setup` manually to bootstrap `.ogoron/` in the repository.
+2. Review and merge the generated bootstrap PR.
+3. Add `generate` for feature-scoped artifact creation.
+4. Add `run` to CI for execution.
+5. Add `heal` later for recovery workflows.
