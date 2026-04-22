@@ -23,6 +23,10 @@ Provide secrets via workflow `env`, not via action inputs.
 - `OGORON_REPO_TOKEN`
 - `OGORON_LLM_API_KEY` when BYOK access is required
 
+Get your Ogoron repository token in the product UI:
+
+- https://app.ogoron.ai/
+
 ## Inputs
 
 | Input | Required | Default | Description |
