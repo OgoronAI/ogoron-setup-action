@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Ogoron
-        uses: OgoronAI/ogoron-actions/setup@v1
+        uses: OgoronAI/ogoron-setup-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OGORON_REPO_TOKEN: ${{ secrets.OGORON_REPO_TOKEN }}
